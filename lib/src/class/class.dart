@@ -1,5 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
-import 'package:obaka/models/room.dart';
+import 'package:meet/models/room.dart';
+import 'package:meet/src/class/people.dart';
+import 'package:meet/util/notification.dart';
 
 import 'bottom.dart';
 
@@ -13,6 +17,7 @@ class Class extends StatefulWidget {
 
 class _ClassState extends State<Class> {
   bool bardisplayed = true;
+  bool peopledisplay = true;
 
   void toggleSideBar() {
     setState(() {
@@ -20,58 +25,19 @@ class _ClassState extends State<Class> {
     });
   }
 
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
   var bottom = Bottom();
   @override
   Widget build(BuildContext context) {
-    var personchats = Container(
-        child: DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        appBar: AppBar(
-          title:
-              Text('Meeting details', style: TextStyle(color: Colors.white70)),
-          actions: [
-            IconButton(
-                icon: Icon(
-                  Icons.close,
-                  color: Colors.white70,
-                ),
-                onPressed: toggleSideBar)
-          ],
-          bottom: TabBar(
-            labelStyle: TextStyle(fontWeight: FontWeight.bold),
-            tabs: [
-              Tab(icon: Icon(Icons.people)),
-              Tab(icon: Icon(Icons.message)),
-              // Tab(child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [Icon(Icons.people),Text('People')])),
-              // Tab(child: Row(children: [Icon(Icons.message),Text('Chat')])),
-            ],
-          ),
-        ),
-        body: TabBarView(children: [
-          Container(child: Text('People')),
-          Container(child: Text('Chats')),
-        ]),
-        bottomNavigationBar: Container(
-          height: 70,
-          color: Theme.of(context).primaryColor,
-          child: Row(
-            children: [
-              SizedBox(width: 10),
-              Expanded(
-                child: TextField(
-                    decoration: InputDecoration(),
-                    onSubmitted: (text) {
-                      print(widget.room.sendMessage(text));
-                    }),
-              ),
-              IconButton(icon: Icon(Icons.send), onPressed: () {})
-            ],
-          ),
-        ),
-      ),
-    ));
-
     return Container(
       width: double.infinity,
       height: double.infinity,
@@ -100,14 +66,16 @@ class _ClassState extends State<Class> {
                               icon: Icon(Icons.people),
                               onPressed: () {
                                 setState(() {
-                                  bardisplayed = bardisplayed == false;
+                                  peopledisplay = true;
+                                  bardisplayed = true;
                                 });
                               }),
                           IconButton(
                               icon: Icon(Icons.message),
                               onPressed: () {
                                 setState(() {
-                                  bardisplayed = bardisplayed == false;
+                                  peopledisplay = false;
+                                  bardisplayed = true;
                                 });
                               }),
                           Container(
@@ -139,7 +107,16 @@ class _ClassState extends State<Class> {
           if (bardisplayed)
             Flexible(
               flex: 1,
-              child: personchats,
+              child: NotificationListener<CloseMe>(
+                  onNotification: (CloseMe no) {
+                    setState(() {
+                      bardisplayed = false;
+                    });
+                    return true;
+                  },
+                  child: Container(
+                    child: PeoplesChats(widget.room, showpeople: peopledisplay),
+                  )),
             )
         ],
       ),

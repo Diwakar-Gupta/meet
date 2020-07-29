@@ -1,55 +1,11 @@
 import 'dart:async';
 import 'dart:html';
 import 'dart:convert';
+import 'package:meet/models/util/simplewebsocket.dart';
+
 import 'message.dart';
 import 'poll.dart';
-import 'simplewebsocket.dart';
 import 'user.dart';
-
-class UserList {
-  final List<User> users = [];
-  StreamController<Map> _changestream;
-
-  UserList() {
-    _changestream = new StreamController<Map>();
-  }
-
-  void dispose() {
-    _changestream.close();
-  }
-
-  Stream<Map> getChangeStream() {
-    return _changestream.stream.asBroadcastStream();
-  }
-
-  int binarySearch(User user) {
-    return 0;
-  }
-
-  void addUser(User user) {
-    print('adding user: ${user.id} ${user.name} ${user.picURL}');
-    int index = binarySearch(user);
-    if (index >= 0) {
-      return;
-    }
-
-    index = index * -1 - 1;
-    users.insert(index, user);
-    _changestream.add({'type': "add", 'index': index});
-  }
-
-  void remove(String id) {
-    int index = 0;
-
-    for (User u in users) {
-      if (u.id.compareTo(id) == 0) {
-        users.removeAt(index);
-        _changestream.add({'type': "remove", 'index': index});
-      }
-      index++;
-    }
-  }
-}
 
 class Room {
   final String roomId;
@@ -57,12 +13,37 @@ class Room {
 
   final UserList users = new UserList();
   final List<Poll> polls = [];
-  final List<Message> messages = [];
+  final MessageList messages = new MessageList();
 
   SimpleWebSocket _simpleWebSocket;
 
   void onMessage(MessageEvent event) {
-    print('got message ${event.data}');
+    print(event.data);
+    final jobj = json.decode(event.data);
+
+    switch (jobj['type']) {
+      case 'self':
+          User.me = User(jobj['data']['id'], jobj['data']['name'], jobj['data']['picurl']);
+        break;
+      case 'user':
+        var uobj = jobj['data'];
+        switch (uobj['type']) {
+          case 'add':
+            users.addUser(User(uobj['id'], uobj['name'], uobj['picimg']));
+            break;
+          case 'remove':
+            users.remove(uobj['id']);
+            break;
+          default:
+        }
+        break;
+      case 'message':
+        var mobj = jobj['data'];
+        messages.addMessage(
+            Message(mobj['from'], mobj['to'], mobj['message']));
+            break;
+      default:
+    }
   }
 
   bool sendMessage(String text) {

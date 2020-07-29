@@ -4,3 +4,7 @@ class ChangeTheme extends Notification {
   final ThemeData theme;
   ChangeTheme(this.theme);
 }
+
+class CloseMe extends Notification{
+  
+}

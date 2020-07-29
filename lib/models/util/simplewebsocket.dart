@@ -17,18 +17,17 @@ class SimpleWebSocket {
   }
 
   void dispose() {
+    if(soc!=null)
+      soc.close();
     _userS.close();
     _messageS.close();
     _pollS.close();
   }
 
   void connect() async {
-    var times = 0;
-
-    while (times < 10 &&
-        (soc == null ||
-            soc.readyState == WebSocket.CLOSED ||
-            soc.readyState == WebSocket.CLOSED)) {
+    while (soc == null ||
+        soc.readyState == WebSocket.CLOSED ||
+        soc.readyState == WebSocket.CLOSING) {
       try {
         soc = WebSocket(url);
 
@@ -45,10 +44,8 @@ class SimpleWebSocket {
           soc.close();
           new Future.delayed(Duration(seconds: 2)).then((value) => connect());
         });
-        times++;
       } catch (e) {
         print('error $e');
-        times++;
       }
     }
   }
